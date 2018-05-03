@@ -3,10 +3,12 @@ package com.djacoronel.randombookrecommender
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import com.squareup.picasso.Picasso
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,7 +35,13 @@ class MainActivity : AppCompatActivity() {
                         .observeOn(AndroidSchedulers.mainThread())
                         .map { bookResponse -> bookResponse.items }
                         .subscribe({ items ->
-                            text.text = items.toString()
+
+                            val randomNumber = Random().nextInt(items.size)
+                            val item = items[randomNumber]
+
+                            Picasso.get().load(item.volumeInfo.imageLinks.thumbnail).into(book_cover)
+                            book_title.text = item.volumeInfo.title
+
                         })
         )
     }
