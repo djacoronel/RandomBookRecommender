@@ -1,14 +1,19 @@
 package com.djacoronel.randombookrecommender
 
 import android.os.Bundle
+import android.support.design.widget.BottomSheetBehavior
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
+import android.text.InputType
+import android.view.KeyEvent
+import android.view.View
 import com.squareup.picasso.Picasso
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.bottom_sheet.*
 import java.util.*
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,7 +25,30 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         bookService = RetrofitHelper().getBookService()
-        requestBooks()
+
+        button.setOnClickListener { requestBooks() }
+
+
+        val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
+
+        edit_text.inputType = InputType.TYPE_CLASS_TEXT
+        edit_text.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
+            // If the event is a key-down event on the "enter" button
+            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                // Perform action on key press
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+
+                button.performClick()
+                return@OnKeyListener true
+            }
+            false
+        })
+
+        keyword_text.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+
+
     }
 
     override fun onDestroy() {
@@ -29,19 +57,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestBooks() {
+        val keywords = edit_text.text.toString()
+
         compositeDisposable.add(
-                bookService.queryBooks("Programming", 30)
+                bookService.queryBooks(keywords, Random().nextInt(50))
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .map { bookResponse -> bookResponse.items }
                         .subscribe({ items ->
+                            if (items.isNotEmpty()) {
+                                val randomNumber = Random().nextInt(items.size)
+                                val item = items[randomNumber]
 
-                            val randomNumber = Random().nextInt(items.size)
-                            val item = items[randomNumber]
+                                Picasso.get().load(item.volumeInfo.imageLinks.thumbnail).into(book_cover)
+                                book_title.text = item.volumeInfo.title
+                                book_subtitle.text = item.volumeInfo.subtitle
 
-                            Picasso.get().load(item.volumeInfo.imageLinks.thumbnail).into(book_cover)
-                            book_title.text = item.volumeInfo.title
+                                var authorYear = item.volumeInfo.authors!!.joinToString()
+                                authorYear += " (${item.volumeInfo.publishedDate})"
+                                book_author_year.text = authorYear
 
+                                if (book_subtitle.text == "")
+                                    book_subtitle.visibility = View.GONE
+                                else
+                                    book_subtitle.visibility = View.VISIBLE
+
+                            } else {
+                                book_title.text = "No book to recommend for that keyword."
+                                book_subtitle.text = "Try other keywords."
+                                book_author_year.text = ":("
+                                book_cover.setImageResource(R.drawable.book)
+                            }
                         })
         )
     }

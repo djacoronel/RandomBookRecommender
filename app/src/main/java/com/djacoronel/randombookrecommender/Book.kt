@@ -13,7 +13,7 @@ class VolumeInfo {
     var subtitle: String? = null
     var authors: List<String>? = null
     var publisher: String? = null
-    var publishdDate: String? = null
+    var publishedDate: String? = null
     var description: String? = null
     var imageLinks: ImageLinks = ImageLinks()
 }
