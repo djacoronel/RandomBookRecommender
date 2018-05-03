@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
 import android.support.v7.app.AppCompatActivity
 import android.text.InputType
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import com.squareup.picasso.Picasso
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottom_sheet.*
@@ -64,31 +66,44 @@ class MainActivity : AppCompatActivity() {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .map { bookResponse -> bookResponse.items }
-                        .subscribe({ items ->
-                            if (items.isNotEmpty()) {
-                                val randomNumber = Random().nextInt(items.size)
-                                val item = items[randomNumber]
-
-                                Picasso.get().load(item.volumeInfo.imageLinks.thumbnail).into(book_cover)
-                                book_title.text = item.volumeInfo.title
-                                book_subtitle.text = item.volumeInfo.subtitle
-
-                                var authorYear = item.volumeInfo.authors!!.joinToString()
-                                authorYear += " (${item.volumeInfo.publishedDate})"
-                                book_author_year.text = authorYear
-
-                                if (book_subtitle.text == "")
-                                    book_subtitle.visibility = View.GONE
-                                else
-                                    book_subtitle.visibility = View.VISIBLE
-
-                            } else {
-                                book_title.text = "No book to recommend for that keyword."
-                                book_subtitle.text = "Try other keywords."
-                                book_author_year.text = ":("
-                                book_cover.setImageResource(R.drawable.book)
-                            }
+                        .subscribe({ books ->
+                            displayBookInfo(books)
+                        }, { throwable ->
+                            Log.d("ERROR", throwable.message)
                         })
         )
+
+
+    }
+
+    private fun displayBookInfo(books: List<Book>) {
+        if (books.isNotEmpty()) {
+            val randomNumber = Random().nextInt(books.size)
+            val item = books[randomNumber]
+
+            Picasso.get().load(item.volumeInfo.imageLinks.thumbnail).into(book_cover)
+            book_title.text = item.volumeInfo.title
+            book_subtitle.text = item.volumeInfo.subtitle
+
+
+            var authorYear = ""
+            item.volumeInfo.authors?.let {
+                authorYear = it.joinToString()
+            }
+            authorYear += " (${item.volumeInfo.publishedDate})"
+            book_author_year.text = authorYear
+
+
+            if (book_subtitle.text == "")
+                book_subtitle.visibility = View.GONE
+            else
+                book_subtitle.visibility = View.VISIBLE
+
+        } else {
+            book_title.text = "No book to recommend for that keyword."
+            book_subtitle.text = "Try other keywords."
+            book_author_year.text = ":("
+            book_cover.setImageResource(R.drawable.book)
+        }
     }
 }
