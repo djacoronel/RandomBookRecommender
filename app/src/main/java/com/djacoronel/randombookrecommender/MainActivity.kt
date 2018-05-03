@@ -10,10 +10,10 @@ import android.view.View
 import com.squareup.picasso.Picasso
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottom_sheet.*
+import org.jetbrains.anko.alert
 import java.util.*
 
 
@@ -30,16 +30,12 @@ class MainActivity : AppCompatActivity() {
 
         button.setOnClickListener { requestBooks() }
 
-
         val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
 
         edit_text.inputType = InputType.TYPE_CLASS_TEXT
-        edit_text.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
-            // If the event is a key-down event on the "enter" button
+        edit_text.setOnKeyListener(View.OnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                // Perform action on key press
                 bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-
                 button.performClick()
                 return@OnKeyListener true
             }
@@ -72,8 +68,6 @@ class MainActivity : AppCompatActivity() {
                             Log.d("ERROR", throwable.message)
                         })
         )
-
-
     }
 
     private fun displayBookInfo(books: List<Book>) {
@@ -85,7 +79,6 @@ class MainActivity : AppCompatActivity() {
             book_title.text = item.volumeInfo.title
             book_subtitle.text = item.volumeInfo.subtitle
 
-
             var authorYear = ""
             item.volumeInfo.authors?.let {
                 authorYear = it.joinToString()
@@ -93,12 +86,14 @@ class MainActivity : AppCompatActivity() {
             authorYear += " (${item.volumeInfo.publishedDate})"
             book_author_year.text = authorYear
 
-
             if (book_subtitle.text == "")
                 book_subtitle.visibility = View.GONE
             else
                 book_subtitle.visibility = View.VISIBLE
 
+            book_cover.setOnClickListener {
+                alert(item.volumeInfo.description!!).show()
+            }
         } else {
             book_title.text = "No book to recommend for that keyword."
             book_subtitle.text = "Try other keywords."
