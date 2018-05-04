@@ -34,6 +34,11 @@ class MainActivity : AppCompatActivity() {
 
         button.setOnClickListener { requestBooks() }
 
+        setupBottomSheetBehavior()
+    }
+
+
+    private fun setupBottomSheetBehavior() {
         val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
 
         edit_text.inputType = InputType.TYPE_CLASS_TEXT
@@ -49,14 +54,14 @@ class MainActivity : AppCompatActivity() {
         keyword_text.setOnClickListener {
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
-
-
     }
+
 
     override fun onDestroy() {
         compositeDisposable.clear()
         super.onDestroy()
     }
+
 
     private fun requestBooks() {
         val keywords = edit_text.text.toString()
@@ -67,45 +72,62 @@ class MainActivity : AppCompatActivity() {
                         .observeOn(AndroidSchedulers.mainThread())
                         .map { bookResponse -> bookResponse.items }
                         .subscribe({ books ->
-                            displayBookInfo(books)
+                            displayRandomBook(books)
                         }, { throwable ->
                             Log.d("ERROR", throwable.message)
                         })
         )
     }
 
-    private fun displayBookInfo(books: List<Book>) {
+
+    private fun displayRandomBook(books: List<Book>) {
         if (books.isNotEmpty()) {
             val randomNumber = Random().nextInt(books.size)
-            val item = books[randomNumber]
+            val book = books[randomNumber]
 
-            Picasso.get().load(item.volumeInfo.imageLinks.thumbnail).into(book_cover)
-            book_title.text = item.volumeInfo.title
-            book_subtitle.text = item.volumeInfo.subtitle
-
-            var authorYear = ""
-            item.volumeInfo.authors?.let {
-                authorYear = it.joinToString()
-            }
-            authorYear += " (${item.volumeInfo.publishedDate})"
-            book_author_year.text = authorYear
-
-            if (book_subtitle.text == "")
-                book_subtitle.visibility = View.GONE
-            else
-                book_subtitle.visibility = View.VISIBLE
-
-            item.volumeInfo.description?.let{
-                val description = it
-                book_cover.setOnClickListener {
-                    alert(description).show()
-                }
-            }
+            displayBookInfo(book)
+            setSubtitleVisibility()
         } else {
-            book_title.text = "No book to recommend for that keyword."
-            book_subtitle.text = "Try other keywords."
-            book_author_year.text = ":("
-            book_cover.setImageResource(R.drawable.book)
+            displayNoBookInfo()
         }
+    }
+
+
+    private fun displayBookInfo(book: Book) {
+        Picasso.get().load(book.volumeInfo.imageLinks.thumbnail).into(book_cover)
+        book_title.text = book.volumeInfo.title
+        book_subtitle.text = book.volumeInfo.subtitle
+
+
+        var authorYear = ""
+        book.volumeInfo.authors?.let {
+            authorYear = it.joinToString()
+        }
+        authorYear += " (${book.volumeInfo.publishedDate})"
+        book_author_year.text = authorYear
+
+
+        book.volumeInfo.description?.let {
+            val description = it
+            book_cover.setOnClickListener {
+                alert(description).show()
+            }
+        }
+    }
+
+
+    private fun setSubtitleVisibility() {
+        if (book_subtitle.text == "")
+            book_subtitle.visibility = View.GONE
+        else
+            book_subtitle.visibility = View.VISIBLE
+    }
+
+
+    private fun displayNoBookInfo() {
+        book_title.text = "No book to recommend for that keyword."
+        book_subtitle.text = "Try other keywords."
+        book_author_year.text = ":("
+        book_cover.setImageResource(R.drawable.book)
     }
 }
