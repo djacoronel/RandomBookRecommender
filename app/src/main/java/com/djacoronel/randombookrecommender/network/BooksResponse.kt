@@ -1,4 +1,4 @@
-package com.djacoronel.randombookrecommender.utility
+package com.djacoronel.randombookrecommender.network
 
 import com.djacoronel.randombookrecommender.model.Book
 

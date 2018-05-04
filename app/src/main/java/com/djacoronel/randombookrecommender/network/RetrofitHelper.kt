@@ -1,4 +1,4 @@
-package com.djacoronel.randombookrecommender.utility
+package com.djacoronel.randombookrecommender.network
 
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit

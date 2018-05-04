@@ -9,8 +9,8 @@ import android.view.KeyEvent
 import android.view.View
 import com.djacoronel.randombookrecommender.R
 import com.djacoronel.randombookrecommender.model.Book
-import com.djacoronel.randombookrecommender.utility.BookService
-import com.djacoronel.randombookrecommender.utility.RetrofitHelper
+import com.djacoronel.randombookrecommender.network.BookService
+import com.djacoronel.randombookrecommender.network.RetrofitHelper
 import com.squareup.picasso.Picasso
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
