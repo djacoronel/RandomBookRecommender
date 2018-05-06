@@ -13,4 +13,6 @@ Uses:
   <img src="../master/screenshots/1.png" width="250"/>
   <img src="../master/screenshots/2.png" width="250"/>
   <img src="../master/screenshots/3.png" width="250"/>
+  <img src="../master/screenshots/4.png" width="250"/>
+  <img src="../master/screenshots/5.png" width="250"/>
 </p>
