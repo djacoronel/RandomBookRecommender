@@ -31,9 +31,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         bookService = RetrofitHelper().getBookService()
-
         button.setOnClickListener { requestBooks() }
-
         setupBottomSheetBehavior()
     }
 
