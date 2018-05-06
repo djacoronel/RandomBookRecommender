@@ -12,13 +12,15 @@ import com.djacoronel.randombookrecommender.model.Book
 import com.djacoronel.randombookrecommender.network.BookService
 import com.djacoronel.randombookrecommender.network.RetrofitHelper
 import com.squareup.picasso.Picasso
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottom_sheet.*
 import org.jetbrains.anko.alert
-import java.util.*
+import org.jetbrains.anko.toast
+import java.util.Random
 
 
 class MainActivity : AppCompatActivity() {
@@ -31,10 +33,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         bookService = RetrofitHelper().getBookService()
-        button.setOnClickListener { requestBooks() }
         setupBottomSheetBehavior()
     }
-
 
     private fun setupBottomSheetBehavior() {
         val bottomSheetBehavior = BottomSheetBehavior.from(bottom_sheet)
@@ -50,33 +50,56 @@ class MainActivity : AppCompatActivity() {
         })
 
         keyword_text.setOnClickListener {
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED)
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            else if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+
+        val bookKeywordsObservable = createButtonClickObservable()
+        compositeDisposable.add(
+                bookKeywordsObservable
+                        .doOnNext { progressBar.visibility = View.VISIBLE }
+                        .subscribe { keywords ->
+                            requestBooks(keywords)
+                        })
+    }
 
     override fun onDestroy() {
         compositeDisposable.clear()
         super.onDestroy()
     }
 
+    private fun createButtonClickObservable(): Observable<String> {
+        return Observable.create { emitter ->
+            button.setOnClickListener {
+                emitter.onNext(edit_text.text.toString())
+            }
+            emitter.setCancellable {
+                button.setOnClickListener(null)
+            }
+        }
+    }
 
-    private fun requestBooks() {
-        val keywords = edit_text.text.toString()
-
+    private fun requestBooks(keywords: String) {
         compositeDisposable.add(
                 bookService.queryBooks(keywords, Random().nextInt(50))
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .map { bookResponse -> bookResponse.items }
                         .subscribe({ books ->
+                            progressBar.visibility = View.GONE
                             displayRandomBook(books)
                         }, { throwable ->
                             Log.d("ERROR", throwable.message)
+                            toast("Server error, please try again :(")
                         })
         )
     }
-
 
     private fun displayRandomBook(books: List<Book>) {
         if (books.isNotEmpty()) {
@@ -89,7 +112,6 @@ class MainActivity : AppCompatActivity() {
             displayNoBookInfo()
         }
     }
-
 
     private fun displayBookInfo(book: Book) {
         Picasso.get().load(book.volumeInfo.imageLinks.thumbnail).into(book_cover)
@@ -113,14 +135,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun setSubtitleVisibility() {
         if (book_subtitle.text == "")
             book_subtitle.visibility = View.GONE
         else
             book_subtitle.visibility = View.VISIBLE
     }
-
 
     private fun displayNoBookInfo() {
         book_title.text = "No book to recommend for that keyword."
